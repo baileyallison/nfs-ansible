@@ -7,3 +7,11 @@
       - corosync
     state: present
     update_cache: yes
+  register: apt_install
+
+- name: move corosync.conf if installed
+  ansible.builtin.command: mv /etc/corosync/corosync.conf /etc/corosync/corosync.conf.example
+  args:
+    removes: /etc/corosync/corosync.conf
+    creates: /etc/corosync/corosync.conf.example
+  when: apt_install.changed

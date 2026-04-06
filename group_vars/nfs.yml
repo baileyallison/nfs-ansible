@@ -2,6 +2,15 @@
 # hacluster config
 hacluster_password: "ChangeThisSecurePassword123!"
 
+# firewall config
+configure_firewall: true
+firewall_services:
+  - high-availability
+  - nfs
+  - rpc-bind
+  - mountd
+
+
 # pcs cluster config
 cluster_name: "nfs_cluster"
 cluster_properties:
