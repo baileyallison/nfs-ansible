@@ -12,7 +12,7 @@
   register: corosync_conf
 
 - name: Setup the cluster
-  ansible.builtin.command: pcs cluster setup {{ cluster_name }} {{ groups['nfs_nodes'] | join(' ') }}
+  ansible.builtin.command: pcs cluster setup {{ cluster_name }} {{ groups['nfs'] | join(' ') }}
   run_once: true
   when: not corosync_conf.stat.exists
 
