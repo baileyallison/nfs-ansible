@@ -35,7 +35,7 @@
 
     - name: Remove High Availability services from firewall
       ansible.posix.firewalld:
-        service: {{ item }}
+        service: "{{ item }}"
         permanent: yes
         state: disabled
         immediate: yes
