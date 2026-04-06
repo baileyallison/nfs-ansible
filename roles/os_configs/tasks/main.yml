@@ -8,8 +8,6 @@
     state: started
     enabled: yes
 
-- name: check if firewalld runnung
-
 - name: include configure firewall
   ansible.builtin.include_tasks: "firewall.yml"
   when: configure_firewall | bool
