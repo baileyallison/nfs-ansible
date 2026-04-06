@@ -1,0 +1,74 @@
+---
+- name: purge nfs cluster
+  hosts: nfs
+  become: yes
+
+  tasks:
+    - name: Check if cluster commands are available
+      ansible.builtin.command: which pcs
+      register: pcs_check
+      failed_when: false
+      changed_when: false
+
+    - name: Teardown Cluster Configuration
+      when: pcs_check.rc == 0
+      block:
+        - name: Stop the cluster
+          ansible.builtin.command: pcs cluster stop --all
+          run_once: true
+          register: cluster_stop
+          failed_when: false
+          changed_when: "'Stopping' in cluster_stop.stdout"
+
+        - name: Destroy cluster configuration on all nodes
+          ansible.builtin.command: pcs cluster destroy
+          register: cluster_destroy
+          failed_when: false
+          changed_when: "'Destroying' in cluster_destroy.stdout or 'Removing' in cluster_destroy.stdout"
+
+    - name: Stop and disable pcsd service
+      ansible.builtin.systemd:
+        name: pcsd
+        state: stopped
+        enabled: no
+      failed_when: false
+
+    - name: Remove High Availability services from firewall
+      ansible.posix.firewalld:
+        service: {{ item }}
+        permanent: yes
+        state: disabled
+        immediate: yes
+      loop: "{{ firewall_services }}"
+      failed_when: false # Ignores errors if firewalld is not running
+
+    - name: Remove HA packages (RHEL/Rocky)
+      ansible.builtin.dnf:
+        name:
+          - pcs
+          - pacemaker
+          - corosync
+        state: absent
+      when: ansible_os_family == "RedHat"
+
+    - name: Purge HA packages (Ubuntu/Debian)
+      ansible.builtin.apt:
+        name:
+          - pcs
+          - pacemaker
+          - corosync
+        state: absent
+        purge: yes
+        autoremove: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Clean up residual configuration directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/corosync
+        - /var/lib/pcsd
+        - /var/lib/pacemaker
+        - /var/log/corosync
+        - /var/log/pacemaker.log
