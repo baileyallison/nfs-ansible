@@ -29,7 +29,7 @@
   changed_when: false
 
 - name: Set cluster properties
-  ansible.builtin.command: pcs property set {{ item,key }}=={{ item.value }}
+  ansible.builtin.command: pcs property set {{ item.key }}={{ item.value }}
   run_once: true
   loop: "{{cluster_properties | dict2items }}"
   register: pcs_props

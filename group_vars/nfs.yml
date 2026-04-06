@@ -9,7 +9,7 @@ cluster_properties:
   stonith-enabled: "false"
 
 # nfs daemon resource config
-nfs_shared_info: "/mnt/cephfs/nfs/sharedinfo"
+nfs_shared_infodir: "/mnt/cephfs/nfs/sharedinfo"
 
 # nfs vip resource config
 vip_ip: "192.168.75.105"
