@@ -1,7 +1,7 @@
 ---
 - name: Authenticate cluster nodes
   ansible.builtin.command: >
-    pcs host auth nfs-gw1 nfs-gw2 -u hacluster -p '{{ hacluster_password }}'
+    pcs host auth {{ groups['nfs'] | join(' ') }} -u hacluster -p '{{ hacluster_password }}'
   run_once: true
   register: pcs_auth
   changed_when: "'Authorized' in pcs_auth.stdout"
@@ -12,7 +12,7 @@
   register: corosync_conf
 
 - name: Setup the cluster
-  ansible.builtin.command: pcs cluster setup {{ cluster_name }} nfs-gw1 nfs-gw2
+  ansible.builtin.command: pcs cluster setup {{ cluster_name }} {{ groups['nfs_nodes'] | join(' ') }}
   run_once: true
   when: not corosync_conf.stat.exists
 
@@ -28,11 +28,9 @@
   register: cluster_enable
   changed_when: false
 
-- name: Set cluster properties (Quorum and STONITH)
-  ansible.builtin.command: pcs property set {{ item }}
+- name: Set cluster properties
+  ansible.builtin.command: pcs property set {{ item,key }}=={{ item.value }}
   run_once: true
-  loop:
-    - no-quorum-policy=ignore
-    - stonith-enabled=false
+  loop: "{{cluster_properties | dict2items }}"
   register: pcs_props
   changed_when: false

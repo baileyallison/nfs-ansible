@@ -1,0 +1,9 @@
+---
+- name: Install HA required packages (Ubuntu)
+  ansible.builtin.apt:
+    name:
+      - pcs
+      - pacemaker
+      - corosync
+    state: present
+    update_cache: yes

@@ -1,0 +1,14 @@
+---
+- name: Enable HighAvailability repository
+  ansible.builtin.command: dnf config-manager --set-enabled highavailability
+  register: repo_enable
+  changed_when: "'enabling' in repo_enable.stdout | lower"
+  failed_when: repo_enable.rc != 0 and 'No such command' not in repo_enable.stderr
+
+- name: Install HA required packages
+  ansible.builtin.dnf:
+    name:
+      - pcs
+      - pacemaker
+      - corosync
+    state: present

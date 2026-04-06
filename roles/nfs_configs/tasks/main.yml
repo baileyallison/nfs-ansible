@@ -2,7 +2,7 @@
 - name: Create NFS Daemon resource
   ansible.builtin.command: >
     pcs resource create nfs_daemon ocf:heartbeat:nfsserver
-    nfs_shared_infodir=/mnt/cephfs/nfs/sharedinfo
+    nfs_shared_infodir={{ nfs_shared_infodir }}
   run_once: true
   register: res_nfs_daemon
   failed_when: 

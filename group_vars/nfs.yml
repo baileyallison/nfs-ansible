@@ -1,11 +1,17 @@
 ---
-# cluster_vars.yml
+# hacluster config
 hacluster_password: "ChangeThisSecurePassword123!"
 
-# Cluster Configuration
+# pcs cluster config
 cluster_name: "nfs_cluster"
+cluster_properties:
+  no-quorum-policy: "ignore"
+  stonith-enabled: "false"
 
-# Networking Configuration
+# nfs daemon resource config
+nfs_shared_info: "/mnt/cephfs/nfs/sharedinfo"
+
+# nfs vip resource config
 vip_ip: "192.168.75.105"
 vip_cidr: "16"
 vip_interface: "ens18"
