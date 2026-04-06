@@ -1,0 +1,38 @@
+---
+- name: Authenticate cluster nodes
+  ansible.builtin.command: >
+    pcs host auth nfs-gw1 nfs-gw2 -u hacluster -p '{{ hacluster_password }}'
+  run_once: true
+  register: pcs_auth
+  changed_when: "'Authorized' in pcs_auth.stdout"
+
+- name: Check if cluster is already configured
+  ansible.builtin.stat:
+    path: /etc/corosync/corosync.conf
+  register: corosync_conf
+
+- name: Setup the cluster
+  ansible.builtin.command: pcs cluster setup {{ cluster_name }} nfs-gw1 nfs-gw2
+  run_once: true
+  when: not corosync_conf.stat.exists
+
+- name: Start the cluster
+  ansible.builtin.command: pcs cluster start --all
+  run_once: true
+  register: cluster_start
+  changed_when: "'Starting' in cluster_start.stdout"
+
+- name: Enable the cluster to start on boot
+  ansible.builtin.command: pcs cluster enable --all
+  run_once: true
+  register: cluster_enable
+  changed_when: false
+
+- name: Set cluster properties (Quorum and STONITH)
+  ansible.builtin.command: pcs property set {{ item }}
+  run_once: true
+  loop:
+    - no-quorum-policy=ignore
+    - stonith-enabled=false
+  register: pcs_props
+  changed_when: false

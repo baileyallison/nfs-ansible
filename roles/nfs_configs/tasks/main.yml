@@ -1,0 +1,41 @@
+---
+- name: Create NFS Daemon resource
+  ansible.builtin.command: >
+    pcs resource create nfs_daemon ocf:heartbeat:nfsserver
+    nfs_shared_infodir=/mnt/cephfs/nfs/sharedinfo
+  run_once: true
+  register: res_nfs_daemon
+  failed_when: 
+    - res_nfs_daemon.rc != 0
+    - "'already exists' not in res_nfs_daemon.stderr"
+  changed_when: res_nfs_daemon.rc == 0
+
+- name: Create NFS VIP resource
+  ansible.builtin.command: >
+    pcs resource create nfs_vip ocf:heartbeat:IPaddr2
+    ip={{ vip_ip }} cidr_netmask={{ vip_cidr }} nic={{ vip_interface }}
+  run_once: true
+  register: res_nfs_vip
+  failed_when: 
+    - res_nfs_vip.rc != 0
+    - "'already exists' not in res_nfs_vip.stderr"
+  changed_when: res_nfs_vip.rc == 0
+
+- name: Create NFS Notify resource
+  ansible.builtin.command: pcs resource create nfs_notify ocf:heartbeat:nfsnotify
+  run_once: true
+  register: res_nfs_notify
+  failed_when: 
+    - res_nfs_notify.rc != 0
+    - "'already exists' not in res_nfs_notify.stderr"
+  changed_when: res_nfs_notify.rc == 0
+
+- name: Group NFS resources together
+  ansible.builtin.command: pcs resource group add nfs_group nfs_daemon nfs_vip nfs_notify
+  run_once: true
+  register: res_group
+  failed_when: 
+    - res_group.rc != 0
+    - "'already exists' not in res_group.stderr"
+    - "'already belongs to' not in res_group.stderr"
+  changed_when: res_group.rc == 0

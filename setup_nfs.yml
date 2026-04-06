@@ -1,0 +1,11 @@
+---
+- name: Setup NFS High Availability Cluster
+  hosts: nfs
+  become: yes
+  vars_files:
+    - group_vars/nfs.yml
+  
+  roles:
+    - os_configs
+    - ha_cluster
+    - nfs_configs

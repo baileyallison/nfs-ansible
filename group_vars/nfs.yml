@@ -1,0 +1,11 @@
+---
+# cluster_vars.yml
+hacluster_password: "ChangeThisSecurePassword123!"
+
+# Cluster Configuration
+cluster_name: "nfs_cluster"
+
+# Networking Configuration
+vip_ip: "192.168.75.105"
+vip_cidr: "16"
+vip_interface: "ens18"
