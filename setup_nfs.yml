@@ -2,10 +2,41 @@
 - name: Setup NFS High Availability Cluster
   hosts: nfs
   become: yes
-  vars_files:
-    - group_vars/nfs.yml
-  
+
+  # Variables are loaded automatically from group_vars/nfs.yml
+  # If you move vars elsewhere, uncomment the following:
+  # vars_files:
+  #   - vars/nfs.yml
+
+  pre_tasks:
+    - name: Validate required variables are defined
+      ansible.builtin.assert:
+        that:
+          - cluster_name is defined
+          - hacluster_password is defined
+          - hacluster_password != "CHANGE_ME"
+          - virtual_ip is defined
+          - nfs_shared_device is defined
+          - nfs_export_path is defined
+        fail_msg: >-
+          Required variables are missing or still set to placeholder values.
+          Copy group_vars/nfs.yml.example to group_vars/nfs.yml and configure it.
+      run_once: true
+      tags: always
+
+    - name: Gather OS-specific facts
+      ansible.builtin.setup:
+        gather_subset:
+          - min
+          - os_family
+      tags: always
+
   roles:
-    - os_configs
-    - ha_cluster
-    - nfs_configs
+    - role: os_configs
+      tags: [os, prereqs]
+
+    - role: ha_cluster
+      tags: [cluster, ha]
+
+    - role: nfs_configs
+      tags: [nfs, exports]
