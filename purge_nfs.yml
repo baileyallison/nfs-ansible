@@ -1,7 +1,17 @@
 ---
-- name: purge nfs cluster
+- name: Purge NFS HA Cluster
   hosts: nfs
   become: yes
+
+  pre_tasks:
+    - name: Confirm destructive operation
+      ansible.builtin.pause:
+        prompt: >-
+          WARNING: This will destroy the NFS HA cluster, remove all HA packages,
+          and delete cluster configuration on ALL nodes.
+          Press Enter to continue or Ctrl+C to abort.
+      run_once: true
+      tags: always
 
   tasks:
     - name: Check if cluster commands are available
@@ -13,12 +23,20 @@
     - name: Teardown Cluster Configuration
       when: pcs_check.rc == 0
       block:
+        - name: Check if cluster is running
+          ansible.builtin.command: pcs cluster status
+          register: cluster_status
+          failed_when: false
+          changed_when: false
+          run_once: true
+
         - name: Stop the cluster
           ansible.builtin.command: pcs cluster stop --all
           run_once: true
           register: cluster_stop
           failed_when: false
           changed_when: "'Stopping' in cluster_stop.stdout"
+          when: cluster_status.rc == 0
 
         - name: Destroy cluster configuration on all nodes
           ansible.builtin.command: pcs cluster destroy
@@ -39,24 +57,28 @@
         permanent: yes
         state: disabled
         immediate: yes
-      loop: "{{ firewall_services }}"
-      failed_when: false # Ignores errors if firewalld is not running
+      loop: "{{ firewall_services | default([]) }}"
+      failed_when: false
 
-    - name: Remove HA packages (RHEL/Rocky)
+    - name: Remove HA and NFS packages (RHEL/Rocky)
       ansible.builtin.dnf:
         name:
           - pcs
           - pacemaker
           - corosync
+          - fence-agents-all
+          - nfs-utils
         state: absent
       when: ansible_os_family == "RedHat"
 
-    - name: Purge HA packages (Ubuntu/Debian)
+    - name: Purge HA and NFS packages (Ubuntu/Debian)
       ansible.builtin.apt:
         name:
           - pcs
           - pacemaker
           - corosync
+          - nfs-kernel-server
+          - nfs-common
         state: absent
         purge: yes
         autoremove: yes
@@ -68,7 +90,11 @@
         state: absent
       loop:
         - /etc/corosync
+        - /etc/pacemaker
         - /var/lib/pcsd
         - /var/lib/pacemaker
+        - /var/lib/corosync
         - /var/log/corosync
+        - /var/log/pacemaker
         - /var/log/pacemaker.log
+        - /var/log/cluster

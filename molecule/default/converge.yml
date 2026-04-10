@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: nfs
+  become: yes
+
+  roles:
+    - role: os_configs
+    - role: ha_cluster
+    - role: nfs_configs

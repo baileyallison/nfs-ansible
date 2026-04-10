@@ -1,0 +1,26 @@
+---
+# hacluster config
+hacluster_password: "ChangeThisSecurePassword123!"
+
+# firewall config
+configure_firewall: true
+firewall_services:
+  - high-availability
+  - nfs
+  - rpc-bind
+  - mountd
+
+
+# pcs cluster config
+cluster_name: "nfs_cluster"
+cluster_properties:
+  no-quorum-policy: "ignore"
+  stonith-enabled: "false"
+
+# nfs daemon resource config
+nfs_shared_infodir: "/mnt/cephfs/nfs/sharedinfo"
+
+# nfs vip resource config
+vip_ip: "192.168.75.105"
+vip_cidr: "16"
+vip_interface: "ens18"

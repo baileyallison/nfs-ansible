@@ -1,0 +1,67 @@
+---
+dependency:
+  name: galaxy
+  options:
+    requirements-file: requirements.yml
+
+driver:
+  name: docker
+
+platforms:
+  - name: nfs-node-1
+    image: geerlingguy/docker-rockylinux9-ansible:latest
+    command: ""
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    cgroupns_mode: host
+    privileged: true
+    pre_build_image: true
+    groups:
+      - nfs
+
+  - name: nfs-node-2
+    image: geerlingguy/docker-rockylinux9-ansible:latest
+    command: ""
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    cgroupns_mode: host
+    privileged: true
+    pre_build_image: true
+    groups:
+      - nfs
+
+provisioner:
+  name: ansible
+  playbooks:
+    converge: converge.yml
+  inventory:
+    group_vars:
+      nfs:
+        cluster_name: test-nfs-cluster
+        hacluster_password: TestPassword123
+        virtual_ip: 172.17.0.100
+        virtual_ip_cidr: 16
+        virtual_ip_nic: eth0
+        firewall_services:
+          - high-availability
+          - nfs
+          - mountd
+          - rpc-bind
+
+verifier:
+  name: ansible
+
+scenario:
+  name: default
+  test_sequence:
+    - dependency
+    - lint
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    - prepare
+    - converge
+    - verify
+    - cleanup
+    - destroy

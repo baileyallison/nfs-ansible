@@ -1,0 +1,40 @@
+---
+- name: Verify
+  hosts: nfs
+  become: yes
+  gather_facts: true
+
+  tasks:
+    - name: Check that pcs is installed
+      ansible.builtin.command: which pcs
+      register: pcs_installed
+      changed_when: false
+
+    - name: Assert pcs is available
+      ansible.builtin.assert:
+        that:
+          - pcs_installed.rc == 0
+        fail_msg: "pcs is not installed"
+
+    - name: Check that pcsd service is running
+      ansible.builtin.systemd:
+        name: pcsd
+      register: pcsd_status
+
+    - name: Assert pcsd is active and enabled
+      ansible.builtin.assert:
+        that:
+          - pcsd_status.status.ActiveState == "active"
+          - pcsd_status.status.UnitFileState == "enabled"
+        fail_msg: "pcsd is not running or not enabled"
+
+    - name: Check that corosync is installed
+      ansible.builtin.command: which corosync
+      register: corosync_installed
+      changed_when: false
+
+    - name: Assert corosync is available
+      ansible.builtin.assert:
+        that:
+          - corosync_installed.rc == 0
+        fail_msg: "corosync is not installed"
