@@ -18,7 +18,7 @@ platforms:
       - nfs
     interfaces:
       - network_name: private_network
-        ip: 192.168.56.10
+        ip: 172.16.7.1
 
   - name: nfs-node-2
     box: generic/rocky9
@@ -28,7 +28,7 @@ platforms:
       - nfs
     interfaces:
       - network_name: private_network
-        ip: 192.168.56.11
+        ip: 172.16.7.2
 
 provisioner:
   name: ansible
@@ -39,13 +39,9 @@ provisioner:
       nfs:
         cluster_name: test-nfs-cluster
         hacluster_password: TestPassword123
-        virtual_ip: 192.168.56.100
-        virtual_ip_cidr: 24
-        virtual_ip_nic: eth1
-        nfs_shared_device: /dev/null
-        nfs_mount_point: /srv/nfs
-        nfs_export_path: /srv/nfs/share
-        nfs_export_options: "*(rw,sync,no_root_squash)"
+        vip_ip: 172.16.7.7
+        vip_cidr: 24
+        vip_interface: eth1
         firewall_services:
           - high-availability
           - nfs
