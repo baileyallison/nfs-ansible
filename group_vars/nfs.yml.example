@@ -17,6 +17,19 @@ cluster_properties:
   no-quorum-policy: "ignore"
   stonith-enabled: "false"
 
+# cluster node configuration - define IP addresses for corosync rings
+# Each node can have multiple rings for redundancy (ring0, ring1, etc.)
+# These should match your inventory hostnames and their corresponding IPs
+cluster_nodes:
+  - name: "nfs-gw1"
+    rings:
+      - ip: "192.168.1.101"  # Primary network (ring0)
+      - ip: "10.0.1.101"     # Secondary network (ring1) - optional
+  - name: "nfs-gw2"
+    rings:
+      - ip: "192.168.1.102"  # Primary network (ring0)
+      - ip: "10.0.1.102"     # Secondary network (ring1) - optional
+
 # nfs daemon resource config
 nfs_shared_infodir: "/mnt/cephfs/nfs/sharedinfo"
 

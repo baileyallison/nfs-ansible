@@ -16,6 +16,20 @@
   run_once: true
   when: not corosync_conf.stat.exists
 
+- name: Update corosync.conf ringaddr to use IP addresses
+  ansible.builtin.replace:
+    path: /etc/corosync/corosync.conf
+    regexp: 'ring{{ ring_index }}_addr:\s*{{ ansible_hostname }}'
+    replace: 'ring{{ ring_index }}_addr: {{ node_rings[ring_index].ip }}'
+  loop: "{{ (cluster_nodes | selectattr('name', 'equalto', ansible_hostname) | first).rings | enumerate }}"
+  loop_control:
+    loop_var: ring_item
+  vars:
+    ring_index: "{{ ring_item[0] }}"
+    node_rings: "{{ (cluster_nodes | selectattr('name', 'equalto', ansible_hostname) | first).rings }}"
+  when: not corosync_conf.stat.exists
+  notify: restart corosync
+
 - name: Start the cluster
   ansible.builtin.command: pcs cluster start --all
   run_once: true
@@ -31,6 +45,6 @@
 - name: Set cluster properties
   ansible.builtin.command: pcs property set {{ item.key }}={{ item.value }}
   run_once: true
-  loop: "{{cluster_properties | dict2items }}"
+  loop: "{{ cluster_properties | dict2items }}"
   register: pcs_props
   changed_when: false
