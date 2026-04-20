@@ -11,24 +11,17 @@
     path: /etc/corosync/corosync.conf
   register: corosync_conf
 
-- name: Setup the cluster
-  ansible.builtin.command: pcs cluster setup {{ cluster_name }} {{ groups['nfs'] | join(' ') }}
+- name: Setup the cluster with multi-ring addresses
+  ansible.builtin.command: >
+    pcs cluster setup {{ cluster_name }}
+    {% for node in cluster_nodes %}
+    {{ node.name }}
+    {% for ring in node.rings %}
+    {{ ring.ip }}
+    {% endfor %}
+    {% endfor %}
   run_once: true
   when: not corosync_conf.stat.exists
-
-- name: Update corosync.conf ringaddr to use IP addresses
-  ansible.builtin.replace:
-    path: /etc/corosync/corosync.conf
-    regexp: 'ring{{ ring_index }}_addr:\s*{{ ansible_hostname }}'
-    replace: 'ring{{ ring_index }}_addr: {{ node_rings[ring_index].ip }}'
-  loop: "{{ (cluster_nodes | selectattr('name', 'equalto', ansible_hostname) | first).rings | enumerate }}"
-  loop_control:
-    loop_var: ring_item
-  vars:
-    ring_index: "{{ ring_item[0] }}"
-    node_rings: "{{ (cluster_nodes | selectattr('name', 'equalto', ansible_hostname) | first).rings }}"
-  when: not corosync_conf.stat.exists
-  notify: restart corosync
 
 - name: Start the cluster
   ansible.builtin.command: pcs cluster start --all
@@ -48,3 +41,28 @@
   loop: "{{ cluster_properties | dict2items }}"
   register: pcs_props
   changed_when: false
+
+- name: Verify corosync.conf contains all ring addresses
+  ansible.builtin.shell: |
+    for ring_idx in $(seq 0 {{ cluster_nodes[0].rings | length - 1 }}); do
+      grep -q "ring${ring_idx}_addr" /etc/corosync/corosync.conf && echo "ring${ring_idx}: OK" || echo "ring${ring_idx}: MISSING"
+    done
+  run_once: true
+  register: ring_verify
+  changed_when: false
+
+- name: Display ring verification results
+  ansible.builtin.debug:
+    msg: "{{ ring_verify.stdout_lines }}"
+  run_once: true
+
+- name: Verify cluster status
+  ansible.builtin.command: pcs cluster status
+  run_once: true
+  register: cluster_status
+  changed_when: false
+
+- name: Display cluster status
+  ansible.builtin.debug:
+    msg: "{{ cluster_status.stdout_lines }}"
+  run_once: true

@@ -18,13 +18,21 @@ cluster_properties:
   stonith-enabled: "false"
 
 # cluster node configuration
+# Each node can have multiple redundant rings for corosync communication
+# Define ring IPs as separate addresses for redundancy (ring0, ring1, ring2, etc.)
 cluster_nodes:
   - name: "{{ groups['nfs'][0] }}"
     rings:
       - ip: "{{ hostvars[groups['nfs'][0]]['ansible_host'] | default(groups['nfs'][0]) }}"
+      # Uncomment to add ring1 for redundant communication:
+      # - ip: "{{ hostvars[groups['nfs'][0]]['ring1_ip'] | default(groups['nfs'][0]) }}"
+      # - ip: "{{ hostvars[groups['nfs'][0]]['ring2_ip'] | default(groups['nfs'][0]) }}"
   - name: "{{ groups['nfs'][1] }}"
     rings:
       - ip: "{{ hostvars[groups['nfs'][1]]['ansible_host'] | default(groups['nfs'][1]) }}"
+      # Uncomment to add ring1 for redundant communication:
+      # - ip: "{{ hostvars[groups['nfs'][1]]['ring1_ip'] | default(groups['nfs'][1]) }}"
+      # - ip: "{{ hostvars[groups['nfs'][1]]['ring2_ip'] | default(groups['nfs'][1]) }}"
 
 # nfs daemon resource config
 nfs_shared_infodir: "/mnt/cephfs/nfs/sharedinfo"
