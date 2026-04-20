@@ -17,7 +17,7 @@
     {% for node in cluster_nodes %}
     {{ node.name }}
     {% for ring in node.rings %}
-    {{ ring.ip }}
+    addr={{ ring.ip }}
     {% endfor %}
     {% endfor %}
   run_once: true
