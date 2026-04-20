@@ -16,7 +16,7 @@
           - hacluster_password is defined
           - hacluster_password != "CHANGE_ME"
           - vip_ip is defined
-          - nfs_shared_device is defined
+          - nfs_shared_infodir is defined
         fail_msg: >-
           Required variables are missing or still set to placeholder values.
           Copy group_vars/nfs.yml.example to group_vars/nfs.yml and configure it.
